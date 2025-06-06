@@ -1,31 +1,55 @@
 <script setup>
 import { reactive, onMounted } from "vue";
-import axios from "axios";
+import { useToast } from "vue-toastification";
 import OrderCard from "@/components/OrderCard.vue";
 import ConfirmationModal from "@/components/ConfirmationModal.vue";
-import { useToast } from "vue-toastification";
+import { getPendingOrders } from '@/services/api';
 
 const state = reactive({
   orders: [],
   selectedOrder: null,
-  showConfirmationModal: false
+  showConfirmationModal: false,
 });
 
 const toast = useToast();
 
-// Fetch orders and filter out accepted ones
+// Hardcoded boutique ID
+const boutiqueId = '67963acd15a076d83704ce25';
+
+// Fetch orders from backend
 const fetchOrders = async () => {
   try {
-    const [ordersResponse, acceptedOrdersResponse] = await Promise.all([
-      axios.get("http://localhost:9000/orders"),
-      axios.get("http://localhost:9000/acceptedOrders")
-    ]);
+    const orders = await getPendingOrders(boutiqueId);
 
-    // Remove orders that are already accepted
-    const acceptedOrderIds = new Set(acceptedOrdersResponse.data.map(order => order.order_id));
-    state.orders = ordersResponse.data.filter(order => !acceptedOrderIds.has(order.order_id));
+    state.orders = orders.map((order, idx) => {
+      let parsedLocation = "Unknown";
+      try {
+        const locObj = eval("(" + order.location + ")");
+        parsedLocation = locObj?.formattedAddress || "Unknown";
+      } catch (e) {
+        console.warn("⚠️ Failed to parse location string:", e);
+      }
+
+      return {
+        id: order.orderId,
+        order_id: `ORD${String(idx + 1).padStart(3, '0')}`,
+        style: order.dressType,
+        placed_on: new Date(order.createdAt).toDateString(),
+        measurements: order.measurements || {},
+        location: parsedLocation,
+        status: order.status || "Pending",
+        image: order.referralImage || "",
+        voiceNotes: order.voiceNote || [],
+        alterations: order.alterations || false,
+        pickUp: order.pickUp || false,
+        totalAmount: order.totalAmount || 0,
+        bill: order.bill || {},
+        userName: order.userName || "Unknown",
+      };
+    });
   } catch (error) {
     console.error("❌ Failed to fetch orders:", error);
+    toast.error("Failed to load orders from backend.");
   }
 };
 
@@ -35,48 +59,22 @@ const openConfirmationModal = (order) => {
   state.showConfirmationModal = true;
 };
 
-// Accept an order
+// Accept order (local only)
 const acceptOrder = async () => {
   if (!state.selectedOrder) return;
 
   try {
-    console.log("✅ Accepting order:", state.selectedOrder);
-
-    // Add status field when accepting
-    const orderWithStatus = { ...state.selectedOrder, status: 1 }; // Default status: "Accepted"
-
-    // 1️⃣ Add order to acceptedOrders
-    const response = await axios.post("http://localhost:9000/acceptedOrders", orderWithStatus);
-
-    // ✅ Check response status correctly
-    if (response.status < 200 || response.status >= 300) {
-      throw new Error("Failed to add order to acceptedOrders");
-    }
-
-    // 2️⃣ Remove from orders in JSON server
-    await axios.delete(`http://localhost:9000/orders/${state.selectedOrder.id}`);
-
-    // 3️⃣ Update local state: Remove from pending orders
-    state.orders = state.orders.filter(o => o.id !== state.selectedOrder.id);
-
-    // 4️⃣ Close modal & reset selected order
+    const orderId = state.selectedOrder.id;
+    state.orders = state.orders.filter(o => o.id !== orderId);
     state.showConfirmationModal = false;
+    toast.success(`✅ Order ${state.selectedOrder.order_id} accepted successfully!`);
     state.selectedOrder = null;
-
-    // ✅ Success toast with Order ID
-    toast.success(`✅ Order #${orderWithStatus.order_id} accepted successfully!`, {
-      timeout: 3000,
-    });
-
   } catch (error) {
     console.error("❌ Failed to accept order:", error);
-    toast.error(`❌ Failed to accept order: ${error.message}`, {
-      timeout: 3000,
-    });
+    toast.error("Failed to accept order.");
   }
 };
 
-// Fetch orders on mount
 onMounted(fetchOrders);
 </script>
 
@@ -84,28 +82,32 @@ onMounted(fetchOrders);
   <section class="bg-blue-50 px-4 py-10">
     <div class="container-xl lg-container m-auto">
       <h2 class="text-4xl font-bold mb-6 text-center">
-        Orders To Accept <span v-if="state.orders.length" class="text-lg text-gray-600">({{ state.orders.length }} pending)</span>
+        Orders To Accept
+        <span v-if="state.orders.length" class="text-lg text-gray-600">
+          ({{ state.orders.length }} pending)
+        </span>
       </h2>
 
       <div v-if="state.orders.length > 0" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <OrderCard v-for="order in state.orders" :key="order.order_id" :order="order"
-          @acceptOrder="openConfirmationModal(order)" />
+        <OrderCard
+          v-for="order in state.orders"
+          :key="order.order_id"
+          :order="order"
+          @acceptOrder="openConfirmationModal(order)"
+        />
       </div>
 
-      <!-- Cheerful message when no more orders -->
       <div v-else class="text-center text-green-600 text-lg font-semibold mt-10">
         <i class="pi pi-check-circle text-green-500 text-3xl"></i>
         <p class="mt-2">🎉 Hooray! You have no more pending orders to accept.</p>
       </div>
     </div>
 
-    <!-- Confirmation Modal -->
-    <ConfirmationModal v-if="state.showConfirmationModal"
-      :message="'Are you sure you want to accept order ' + state.selectedOrder?.order_id + '?'" 
+    <ConfirmationModal
+      v-if="state.showConfirmationModal"
+      :message="'Are you sure you want to accept order ' + state.selectedOrder?.order_id + '?'"
       @confirm="acceptOrder"
-      @cancel="state.showConfirmationModal = false" />
-
-    <!-- Toast Notifications -->
-    <Toast />
+      @cancel="state.showConfirmationModal = false"
+    />
   </section>
 </template>
