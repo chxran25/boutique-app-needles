@@ -1,0 +1,65 @@
+{
+  "profile": {
+    "boutiqueName": "Chic Couture",
+    "ownerName": "Nivas bhai",
+    "phone": "+1 (555) 123-4567",
+    "address": "123 Fashion Ave, New York, NY 10001",
+    "imageUrl": "https://via.placeholder.com/400x200"
+  },
+  "dressTypes": [
+    { "id": "1", "name": "Evening Gown", "image": "https://via.placeholder.com/200" },
+    { "id": "2", "name": "Cocktail Dress", "image": "https://via.placeholder.com/200" },
+    { "id": "3", "name": "Wedding Dress", "image": "https://via.placeholder.com/200" },
+    { "id": "4", "name": "Prom Dress", "image": "https://via.placeholder.com/200" },
+    { "id": "5", "name": "Bridesmaid Dress", "image": "https://via.placeholder.com/200" }
+  ],
+  "catalogue": [
+    { "id": "1", "name": "Saree Stitching", "price": 2000 },
+    { "id": "2", "name": "Blouse Customization", "price": 1500 },
+    { "id": "3", "name": "Lehenga Stitching", "price": 3000 },
+    { "id": "4", "name": "Gown Alteration", "price": 2500 }
+  ],
+  "orders": [
+    {
+      "id": "e87a",
+      "order_id": "ORD001",
+      "style": "Evening Gown",
+      "placed_on": "Feb 25, 2025",
+      "measurements": { "bust": "36\"", "waist": "28\"", "hips": "38\"" },
+      "location": "New York, NY"
+    },
+    {
+      "id": "996f",
+      "order_id": "ORD002",
+      "style": "Cocktail Dress",
+      "placed_on": "Feb 20, 2025",
+      "measurements": { "bust": "34\"", "waist": "26\"", "hips": "36\"" },
+      "location": "Los Angeles, CA"
+    },
+    {
+      "id": "2f88",
+      "order_id": "ORD003",
+      "style": "Bridal Gown",
+      "placed_on": "Feb 15, 2025",
+      "measurements": { "bust": "38\"", "waist": "30\"", "hips": "40\"" },
+      "location": "Chicago, IL"
+    },
+    {
+      "id": "0bc2",
+      "order_id": "ORD004",
+      "style": "Summer Dress",
+      "placed_on": "Feb 10, 2025",
+      "measurements": { "bust": "32\"", "waist": "24\"", "hips": "34\"" },
+      "location": "Miami, FL"
+    },
+    {
+      "id": "77b4",
+      "order_id": "ORD005",
+      "style": "Formal Suit",
+      "placed_on": "Feb 5, 2025",
+      "measurements": { "chest": "40\"", "waist": "34\"", "inseam": "32\"" },
+      "location": "Dallas, TX"
+    }
+  ],
+  "acceptedOrders": []
+}

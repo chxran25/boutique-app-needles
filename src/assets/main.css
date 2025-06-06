@@ -1,0 +1,5 @@
+@import './tailwind.css';
+.pi {
+    font-size: 1.75rem !important;  /* Adjust this value if needed */
+  }
+  
