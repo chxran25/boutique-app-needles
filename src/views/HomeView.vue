@@ -2,23 +2,23 @@
 import { reactive, onMounted } from "vue";
 import { useToast } from "vue-toastification";
 import OrderCard from "@/components/OrderCard.vue";
-import ConfirmationModal from "@/components/ConfirmationModal.vue";
-import { getPendingOrders } from '@/services/api';
+import { getPendingOrders, getCatalogueByBoutiqueId } from '@/services/api';
 
 const state = reactive({
   orders: [],
-  selectedOrder: null,
-  showConfirmationModal: false,
+  catalogue: [],
 });
 
 const toast = useToast();
-
-// Hardcoded boutique ID
 const boutiqueId = '67963acd15a076d83704ce25';
 
-// Fetch orders from backend
-const fetchOrders = async () => {
+const fetchOrdersAndCatalogue = async () => {
   try {
+    // Step 1: Fetch catalogue
+    const catalogue = await getCatalogueByBoutiqueId(boutiqueId);
+    state.catalogue = catalogue;
+
+    // Step 2: Fetch pending orders
     const orders = await getPendingOrders(boutiqueId);
 
     state.orders = orders.map((order, idx) => {
@@ -32,6 +32,8 @@ const fetchOrders = async () => {
 
       return {
         id: order.orderId,
+        _id: order._id,
+        boutiqueId: boutiqueId,
         order_id: `ORD${String(idx + 1).padStart(3, '0')}`,
         style: order.dressType,
         placed_on: new Date(order.createdAt).toDateString(),
@@ -45,37 +47,18 @@ const fetchOrders = async () => {
         totalAmount: order.totalAmount || 0,
         bill: order.bill || {},
         userName: order.userName || "Unknown",
+
+        // ✅ Attach catalogueItems
+        catalogueItems: catalogue,
       };
     });
   } catch (error) {
-    console.error("❌ Failed to fetch orders:", error);
-    toast.error("Failed to load orders from backend.");
+    console.error("❌ Failed to fetch data:", error);
+    toast.error("Failed to load orders or catalogue.");
   }
 };
 
-// Open confirmation modal
-const openConfirmationModal = (order) => {
-  state.selectedOrder = order;
-  state.showConfirmationModal = true;
-};
-
-// Accept order (local only)
-const acceptOrder = async () => {
-  if (!state.selectedOrder) return;
-
-  try {
-    const orderId = state.selectedOrder.id;
-    state.orders = state.orders.filter(o => o.id !== orderId);
-    state.showConfirmationModal = false;
-    toast.success(`✅ Order ${state.selectedOrder.order_id} accepted successfully!`);
-    state.selectedOrder = null;
-  } catch (error) {
-    console.error("❌ Failed to accept order:", error);
-    toast.error("Failed to accept order.");
-  }
-};
-
-onMounted(fetchOrders);
+onMounted(fetchOrdersAndCatalogue);
 </script>
 
 <template>
@@ -93,7 +76,6 @@ onMounted(fetchOrders);
           v-for="order in state.orders"
           :key="order.order_id"
           :order="order"
-          @acceptOrder="openConfirmationModal(order)"
         />
       </div>
 
@@ -102,12 +84,5 @@ onMounted(fetchOrders);
         <p class="mt-2">🎉 Hooray! You have no more pending orders to accept.</p>
       </div>
     </div>
-
-    <ConfirmationModal
-      v-if="state.showConfirmationModal"
-      :message="'Are you sure you want to accept order ' + state.selectedOrder?.order_id + '?'"
-      @confirm="acceptOrder"
-      @cancel="state.showConfirmationModal = false"
-    />
   </section>
 </template>
