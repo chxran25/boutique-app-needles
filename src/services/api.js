@@ -9,7 +9,7 @@ const api = axios.create({
   withCredentials: true,
 });
 
-// Login
+// ✅ Login
 export const loginUser = async (credentials) => {
   try {
     const response = await api.post('/Boutique/login', credentials);
@@ -19,7 +19,7 @@ export const loginUser = async (credentials) => {
   }
 };
 
-// OTP Verification
+// ✅ OTP Verification
 export const verifyOtp = async (payload) => {
   try {
     const response = await api.post('/Boutique/verify-otp', payload);
@@ -29,7 +29,7 @@ export const verifyOtp = async (payload) => {
   }
 };
 
-// Fetch pending orders
+// ✅ Fetch pending orders
 export const getPendingOrders = async (boutiqueId) => {
   try {
     const response = await api.get(`/Boutique/${boutiqueId}/order`);
@@ -59,6 +59,17 @@ export const getCatalogueByBoutiqueId = async (boutiqueId) => {
     return response.data.catalogue;
   } catch (error) {
     console.error("❌ Failed to fetch catalogue:", error);
+    return [];
+  }
+};
+
+// ✅ Fetch paid orders
+export const getPaidOrders = async (boutiqueId) => {
+  try {
+    const response = await api.get(`/Boutique/${boutiqueId}/PaidOrders`);
+    return response.data.orders;
+  } catch (error) {
+    console.error("❌ Failed to fetch paid orders:", error);
     return [];
   }
 };
