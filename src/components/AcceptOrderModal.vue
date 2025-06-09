@@ -162,7 +162,7 @@ const props = defineProps({
     }
 });
 
-const emit = defineEmits(['close', 'success']);
+const emit = defineEmits(['close', 'success', 'showReceipt']);
 const toast = useToast();
 
 const selectedItems = ref([{ item: '', quantity: 1 }]);
@@ -206,7 +206,7 @@ const createBillAndAccept = async () => {
     isSubmitting.value = true;
 
     try {
-        // 🔍 Debug logging - add this
+        // Debug logging
         console.log("📦 Full order object:", props.order);
         console.log("🔑 Available keys:", Object.keys(props.order));
         console.log("🆔 orderId:", props.order.orderId);
@@ -215,7 +215,7 @@ const createBillAndAccept = async () => {
 
         const payload = {
             boutiqueId: props.order.boutiqueId,
-            orderId: props.order.id, // This might be undefined!
+            orderId: props.order.id || props.order.orderId || props.order._id,
             selectedItems: selectedItems.value.map(i => ({
                 item: i.item,
                 quantity: i.quantity,
@@ -227,11 +227,23 @@ const createBillAndAccept = async () => {
         };
 
         console.log("🛠 Payload to be sent:", JSON.stringify(payload, null, 2));
-        // ... rest of your code
+        
         const result = await createBill(props.order.boutiqueId, payload);
         toast.success('Order accepted and bill created successfully!');
+        
+        // Close this modal first
+        resetForm();
+        emit('close');
+        
+        // Then show the receipt modal with the bill data
+        emit('showReceipt', {
+            ...result,
+            selectedItems: selectedItems.value,
+            additionalCost: additionalCost.value,
+            orderId: payload.orderId
+        });
+        
         emit('success', result);
-        closeModal();
     } catch (error) {
         console.error('Error:', error);
         toast.error(error.message || 'Failed to create bill');
