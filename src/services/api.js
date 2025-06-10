@@ -148,5 +148,19 @@ export const deleteCatalogueItems = async (boutiqueId, itemNames) => {
   }
 };
 
+export const getAlterationRequests = async (boutiqueId) => {
+  const response = await api.get(`/Boutique/${boutiqueId}/alterations`);
+  return response.data.alterationRequests;
+};
+
+export const reviewAlterationRequest = async (boutiqueId, requestId) => {
+  try {
+    const response = await api.put(`/Boutique/${boutiqueId}/review-alteration/${requestId}`);
+    return response.data;
+  } catch (error) {
+    console.error("❌ Failed to mark alteration as reviewed:", error);
+    throw error.response || error;
+  }
+};
 
 export default api;
