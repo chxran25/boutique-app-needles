@@ -96,5 +96,16 @@ export const getDressTypesWithDetails = async (boutiqueId) => {
   }
 };
 
+export const deleteDressTypeAPI = async (boutiqueId, dressType) => {
+  try {
+    const response = await api.delete(`/Boutique/${boutiqueId}/delete-dressType`, {
+      data: { boutiqueId, dressType },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("❌ Failed to delete dress type:", error);
+    throw error.response || error;
+  }
+};
 
 export default api;
