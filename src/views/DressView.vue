@@ -26,7 +26,7 @@
                 </button>
             </div>
 
-            <!-- Add Button -->
+            <!-- Add Dress Type Button -->
             <div v-if="tab === 'dressTypes'" class="flex justify-end mb-6">
                 <button
                     class="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold rounded-xl shadow-md hover:from-green-600 hover:to-emerald-700 transition-all"
@@ -39,13 +39,13 @@
             <div v-if="tab === 'dressTypes'">
                 <div v-if="loading" class="text-center py-16 text-gray-500 text-lg font-medium">Loading dress types...
                 </div>
-                <div v-else-if="dressTypes.length === 0" class="text-center py-16 text-gray-500 text-lg font-medium">No
-                    dress types added yet.</div>
+                <div v-else-if="dressTypes.length === 0" class="text-center py-16 text-gray-500 text-lg font-medium">
+                    No dress types added yet.
+                </div>
 
                 <div v-else class="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
                     <div v-for="(dress, index) in dressTypes" :key="index"
                         class="bg-white rounded-3xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300 relative">
-                        <!-- Edit/Delete Icons -->
                         <div class="absolute top-4 right-4 flex space-x-2 z-10">
                             <button @click="openPreview(dress)" title="Preview"
                                 class="bg-indigo-100 hover:bg-indigo-200 text-indigo-600 rounded-full p-2">
@@ -82,31 +82,44 @@
                 </div>
             </div>
 
-            <!-- Catalogue Placeholder -->
+            <!-- Catalogue Section -->
             <div v-if="tab === 'catalogue'">
-                <div class="text-center py-20 text-gray-500 font-medium text-lg">Catalogue view coming soon...</div>
+                <p class="text-sm text-gray-500 text-center mb-4">
+                    Showing catalogue for <span class="font-medium text-indigo-600">{{ boutiqueName }}</span>
+                </p>
+                <div v-if="catalogueLoading" class="text-center py-20 text-gray-500 font-medium text-lg">
+                    Loading catalogue...
+                </div>
+                <div v-else-if="catalogue.length === 0" class="text-center py-20 text-gray-500 font-medium text-lg">
+                    No items in your catalogue yet.
+                </div>
+                <div v-else class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                    <div v-for="(item, index) in catalogue" :key="index"
+                        class="bg-white rounded-2xl shadow p-6 border border-gray-100 hover:shadow-lg transition-all duration-300">
+                        <h3 class="text-lg font-semibold text-indigo-700 mb-2 capitalize">
+                            {{ Array.isArray(item.itemName) ? item.itemName.join(', ') : item.itemName }}
+                        </h3>
+
+                        <ul class="space-y-1 text-sm text-gray-700">
+                            <li v-for="(p, i) in item.price" :key="i">₹{{ p }}</li>
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- Add Modal -->
+        <!-- Modals -->
         <AddDressTypeModal :isOpen="showModal" :boutiqueId="boutiqueId" @close="showModal = false"
             @success="refreshList" />
-
-        <!-- Delete Confirmation Modal -->
         <DeleteConfirmationModal :isOpen="showDeleteModal" :itemName="dressToDelete?.type"
             @close="showDeleteModal = false" @confirm="handleConfirmedDelete" />
-
-        <!-- Dress Preview Modal -->
-        <!-- ✅ Correct -->
         <DressTypePreviewModal :isOpen="showPreviewModal" :dressType="dressToPreview" @close="closePreviewModal" />
-
-
     </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { getDressTypesWithDetails } from '@/services/api';
+import { getDressTypesWithDetails, getBoutiqueCatalogueWithName } from '@/services/api';
 import AddDressTypeModal from '@/components/AddDressTypeModal.vue';
 import DeleteConfirmationModal from '@/components/DeleteConfirmationModal.vue';
 import DressTypePreviewModal from '@/components/DressTypePreviewModal.vue';
@@ -114,6 +127,9 @@ import axios from 'axios';
 import { useToast } from 'vue-toastification';
 
 const tab = ref('dressTypes');
+const boutiqueId = '67963acd15a076d83704ce25';
+const toast = useToast();
+
 const dressTypes = ref([]);
 const loading = ref(true);
 const showModal = ref(false);
@@ -121,34 +137,50 @@ const showDeleteModal = ref(false);
 const showPreviewModal = ref(false);
 const dressToDelete = ref(null);
 const dressToPreview = ref(null);
-const boutiqueId = '67963acd15a076d83704ce25';
-const toast = useToast();
 
+// ✅ Catalogue state
+const catalogue = ref([]);
+const boutiqueName = ref('');
+const catalogueLoading = ref(false);
+
+// ✅ Fetch logic
 const fetchDressTypes = async () => {
     try {
+        loading.value = true;
         dressTypes.value = await getDressTypesWithDetails(boutiqueId);
     } catch (error) {
-        console.error('Error loading dress types:', error);
+        toast.error('❌ Failed to load dress types');
     } finally {
         loading.value = false;
     }
 };
 
-const closePreviewModal = () => {
-    showPreviewModal.value = false;
-    dressToPreview.value = null;
+const fetchCatalogue = async () => {
+    try {
+        catalogueLoading.value = true;
+        const result = await getBoutiqueCatalogueWithName(boutiqueId);
+        catalogue.value = result.catalogue;
+        boutiqueName.value = result.boutiqueName;
+    } catch (err) {
+        toast.error('❌ Failed to load catalogue');
+    } finally {
+        catalogueLoading.value = false;
+    }
 };
 
-
 const refreshList = async () => {
-    loading.value = true;
     await fetchDressTypes();
-    loading.value = false;
+    await fetchCatalogue();
 };
 
 const openPreview = (dress) => {
     dressToPreview.value = dress;
     showPreviewModal.value = true;
+};
+
+const closePreviewModal = () => {
+    dressToPreview.value = null;
+    showPreviewModal.value = false;
 };
 
 const promptDelete = (dress) => {
@@ -160,32 +192,20 @@ const handleConfirmedDelete = async () => {
     if (!dressToDelete.value) return;
     try {
         await axios.delete(`https://needles-v1.onrender.com/Boutique/${boutiqueId}/delete-dressType`, {
-            data: {
-                boutiqueId,
-                dressType: dressToDelete.value.type
-            }
+            data: { boutiqueId, dressType: dressToDelete.value.type }
         });
         toast.success(`✅ "${dressToDelete.value.type}" deleted successfully.`);
         refreshList();
     } catch (err) {
-        console.error('Failed to delete dress type:', err);
-        toast.error(`❌ Failed to delete "${dressToDelete.value.type}".`);
+        toast.error(`❌ Failed to delete "${dressToDelete.value.type}"`);
     } finally {
         showDeleteModal.value = false;
         dressToDelete.value = null;
     }
 };
 
-onMounted(fetchDressTypes);
+onMounted(() => {
+    fetchDressTypes();
+    fetchCatalogue();
+});
 </script>
-
-<style scoped>
-::-webkit-scrollbar {
-    height: 6px;
-}
-
-::-webkit-scrollbar-thumb {
-    background-color: #c4b5fd;
-    border-radius: 10px;
-}
-</style>

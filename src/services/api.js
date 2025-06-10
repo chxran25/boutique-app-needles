@@ -108,4 +108,19 @@ export const deleteDressTypeAPI = async (boutiqueId, dressType) => {
   }
 };
 
+// ✅ Fetch catalogue with boutique name (used in DressView.vue)
+export const getBoutiqueCatalogueWithName = async (boutiqueId) => {
+  try {
+    const response = await api.get(`/Boutique/${boutiqueId}/catalogue`);
+    return {
+      catalogue: response.data.catalogue || [],
+      boutiqueName: response.data.boutiqueName || 'Untitled Boutique',
+    };
+  } catch (error) {
+    console.error("❌ Failed to fetch boutique catalogue with name:", error);
+    throw error.response || error;
+  }
+};
+
+
 export default api;
