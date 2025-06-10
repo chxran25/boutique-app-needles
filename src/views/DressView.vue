@@ -1,108 +1,93 @@
-<script setup>
-import { ref, onMounted } from "vue";
-import axios from "axios";
-import TabView from "primevue/tabview";
-import TabPanel from "primevue/tabpanel";
-
-const dressTypes = ref([]);
-const catalogueItems = ref([]);
-const activeTab = ref(0); // Keeps track of selected tab
-
-const fetchData = async () => {
-  try {
-    const [dressRes, catalogueRes] = await Promise.all([
-      axios.get("http://localhost:9000/dressTypes"),
-      axios.get("http://localhost:9000/catalogue"),
-    ]);
-    dressTypes.value = dressRes.data;
-    catalogueItems.value = catalogueRes.data;
-  } catch (error) {
-    console.error("Failed to load data", error);
-  }
-};
-
-onMounted(fetchData);
-</script>
-
 <template>
-  <section class="p-6 pb-24">
-    <h1 class="text-3xl font-bold mb-6 text-gray-800 text-center">Dress Collection</h1>
+  <div class="min-h-screen bg-gradient-to-br from-white to-indigo-50 p-4">
+    <!-- Centered Header -->
+    <div class="flex justify-center items-center mb-6">
+      <h1 class="text-3xl font-extrabold text-indigo-800">Dress Management</h1>
+    </div>
 
-    <!-- Custom Tabs -->
-    <div class="flex justify-center gap-8 mb-6">
-      <button 
-        class="tab-button" 
-        :class="{ 'active-tab': activeTab === 0 }" 
-        @click="activeTab = 0"
+    <!-- Centered Tabs -->
+    <div class="flex justify-center space-x-4 mb-8">
+      <button
+        class="px-6 py-3 rounded-full font-semibold shadow-lg text-base"
+        :class="tab === 'dressTypes' ? 'bg-purple-600 text-white' : 'bg-white text-purple-600 border border-purple-200'"
+        @click="tab = 'dressTypes'"
       >
         Dress Types
       </button>
-      <button 
-        class="tab-button" 
-        :class="{ 'active-tab': activeTab === 1 }" 
-        @click="activeTab = 1"
+      <button
+        class="px-6 py-3 rounded-full font-semibold shadow-lg text-base"
+        :class="tab === 'catalogue' ? 'bg-purple-600 text-white' : 'bg-white text-purple-600 border border-purple-200'"
+        @click="tab = 'catalogue'"
       >
         Catalogue
       </button>
     </div>
 
-    <!-- Tab Content -->
-    <div v-if="activeTab === 0">
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+    <!-- Dress Types View -->
+    <div v-if="tab === 'dressTypes'">
+      <div v-if="loading" class="text-center py-10 text-gray-500">Loading dress types...</div>
+      <div v-else-if="dressTypes.length === 0" class="text-center py-10 text-gray-500">No dress types added yet.</div>
+      <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div
-          v-for="dress in dressTypes"
-          :key="dress.id"
-          class="bg-white shadow-md rounded-lg p-4 text-center transition-transform transform hover:scale-105"
+          v-for="(dress, index) in dressTypes"
+          :key="index"
+          class="bg-white rounded-2xl shadow-md p-5 border border-gray-100 hover:shadow-xl transition-all"
         >
-          <img :src="dress.image" :alt="dress.name" class="w-full h-48 object-cover rounded">
-          <h3 class="text-lg font-semibold mt-2">{{ dress.name }}</h3>
+          <h2 class="text-xl font-bold text-indigo-700 mb-3">{{ dress.type }}</h2>
+          <div class="flex overflow-x-auto space-x-3 mb-4">
+            <img
+              v-for="(img, i) in dress.images"
+              :key="i"
+              :src="img"
+              class="w-24 h-24 object-cover rounded-lg border border-gray-200"
+              alt="Dress Image"
+            />
+          </div>
+          <div>
+            <h3 class="font-semibold text-sm text-gray-700 mb-1">Measurements:</h3>
+            <ul class="text-sm text-gray-600 list-disc pl-5">
+              <li v-for="(m, i) in dress.measurementRequirements" :key="i">{{ m }}</li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>
 
-    <div v-if="activeTab === 1">
-      <div class="bg-white shadow-md rounded-lg p-4">
-        <ul>
-          <li
-            v-for="item in catalogueItems"
-            :key="item.id"
-            class="flex justify-between border-b py-2 hover:bg-gray-100 transition-colors"
-          >
-            <span class="font-medium">{{ item.name }}</span>
-            <span class="text-gray-700">₹{{ item.price }}</span>
-          </li>
-        </ul>
-      </div>
+    <!-- Catalogue View (Placeholder) -->
+    <div v-if="tab === 'catalogue'">
+      <div class="text-center py-10 text-gray-500">Catalogue view coming soon...</div>
     </div>
-  </section>
+  </div>
 </template>
 
+<script setup>
+import { ref, onMounted } from 'vue';
+import { getDressTypesWithDetails } from '@/services/api';
+
+const tab = ref('dressTypes');
+const dressTypes = ref([]);
+const loading = ref(true);
+const boutiqueId = '67963acd15a076d83704ce25'; // Use dynamic routing in real app
+
+const fetchDressTypes = async () => {
+  try {
+    dressTypes.value = await getDressTypesWithDetails(boutiqueId);
+  } catch (error) {
+    console.error('Error loading dress types:', error);
+  } finally {
+    loading.value = false;
+  }
+};
+
+onMounted(fetchDressTypes);
+</script>
+
 <style scoped>
-/* Tab button styling */
-.tab-button {
-  font-size: 1.2rem;
-  font-weight: 600;
-  padding: 8px 16px;
-  border-radius: 5px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  position: relative;
-  transition: all 0.3s ease;
+::-webkit-scrollbar {
+  height: 6px;
 }
-
-.tab-button:hover::after {
-  content: "";
-  width: 100%;
-  height: 3px;
-  background-color: #007bff;
-  position: absolute;
-  bottom: -3px;
-  left: 0;
-}
-
-.active-tab {
-  color: #007bff;
-  border-bottom: 3px solid #007bff;
+::-webkit-scrollbar-thumb {
+  background-color: #c4b5fd;
+  border-radius: 10px;
 }
 </style>

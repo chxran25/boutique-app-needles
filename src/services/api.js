@@ -74,4 +74,27 @@ export const getPaidOrders = async (boutiqueId) => {
   }
 };
 
+// ✅ Update Order Status
+export const updateOrderStatus = async (boutiqueId, orderId, status) => {
+  try {
+    const response = await api.post(`/Boutique/${boutiqueId}/order/${orderId}/status`, { status });
+    return response.data;
+  } catch (error) {
+    console.error("❌ Failed to update order status:", error);
+    throw error.response || error;
+  }
+};
+
+// ✅ Fetch dress types with details
+export const getDressTypesWithDetails = async (boutiqueId) => {
+  try {
+    const response = await api.get(`/Boutique/${boutiqueId}/dresstypes`);
+    return response.data.dressTypes;
+  } catch (error) {
+    console.error("❌ Failed to fetch dress types:", error);
+    return [];
+  }
+};
+
+
 export default api;
