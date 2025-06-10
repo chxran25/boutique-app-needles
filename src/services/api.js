@@ -122,5 +122,31 @@ export const getBoutiqueCatalogueWithName = async (boutiqueId) => {
   }
 };
 
+export const addCatalogueItems = async (boutiqueId, newItems) => {
+  try {
+    const response = await api.post(`/Boutique/${boutiqueId}/add-catalogue-item`, {
+      boutiqueId,
+      newItems,
+    });
+    return response.data;
+  } catch (error) {
+    console.error("❌ Failed to add catalogue items:", error);
+    throw error.response || error;
+  }
+};
+
+// ✅ Delete catalogue items
+export const deleteCatalogueItems = async (boutiqueId, itemNames) => {
+  try {
+    const response = await api.delete(`/Boutique/${boutiqueId}/delete-catalogue-item`, {
+      data: { boutiqueId, itemNames },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("❌ Failed to delete catalogue items:", error);
+    throw error.response || error;
+  }
+};
+
 
 export default api;
