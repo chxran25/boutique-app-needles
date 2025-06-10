@@ -96,7 +96,12 @@
     </div>
 
     <!-- Modals -->
-    <AddDressTypeModal :isOpen="showAddModal" @close="showAddModal = false" @refresh="fetchDressTypes" />
+    <AddDressTypeModal
+      :isOpen="showAddModal"
+      :boutiqueId="boutiqueId"
+      @close="showAddModal = false"
+      @refresh="fetchDressTypes"
+    />
     <DressTypePreviewModal :isOpen="showPreviewModal" :dressType="selectedPreview" @close="closePreviewModal" />
     <ConfirmationModal
       v-if="showDeleteModal"
@@ -105,7 +110,12 @@
       @confirm="deleteDressTypeConfirmed"
       @cancel="showDeleteModal = false"
     />
-    <AddCatalogueItemModal :isOpen="showAddCatalogueModal" @close="showAddCatalogueModal = false" @refresh="fetchCatalogue" />
+    <AddCatalogueItemModal
+      :isOpen="showAddCatalogueModal"
+      :boutiqueId="boutiqueId"
+      @close="showAddCatalogueModal = false"
+      @refresh="fetchCatalogue"
+    />
     <DeleteConfirmationModal
       :isOpen="showDeleteCatalogueModal"
       :itemName="catalogueItemToDelete"
