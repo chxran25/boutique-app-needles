@@ -86,7 +86,19 @@ const regularOrders = computed(() => {
 
 // ✅ Updated: Computed property for reviewed orders
 const reviewedOrders = computed(() => {
-  return state.reviewedAlterations;
+  return state.reviewedAlterations || [];
+});
+
+const filteredStatusOptions = computed(() => {
+  const isReviewedOrder = state.activeTab === 'reviewed';
+
+  return orderStatuses.filter((status) => {
+    if (isReviewedOrder) {
+      return ['Reviewed', 'In Progress', 'Ready for Delivery'].includes(status.value);
+    } else {
+      return ['Pending', 'In Progress', 'Ready for Delivery'].includes(status.value);
+    }
+  });
 });
 
 
@@ -343,7 +355,7 @@ onMounted(() => {
 
         <!-- Status Filter Tabs (only for regular orders) -->
         <div v-if="state.activeTab === 'regular'" class="mt-6 flex flex-wrap gap-2">
-          
+
           <button @click="state.statusFilter = 'all'" :class="[
             'px-4 py-2 rounded-xl font-medium transition-all duration-200',
             state.statusFilter === 'all'
@@ -365,7 +377,7 @@ onMounted(() => {
           </button>
         </div>
 
-        
+
 
         <!-- Search Bar -->
         <div class="mt-6">
@@ -573,9 +585,11 @@ onMounted(() => {
               <select v-model="state.selectedOrderForUpdate"
                 class="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900">
                 <option :value="null" disabled hidden>Choose an order...</option>
-                <option v-for="order in state.acceptedOrders" :key="order._id" :value="order">
-                  {{ formatOrderId(order._id) }} - {{ getCustomerName(order) }} - ₹{{ order.bill.totalAmount }}
+                <option v-for="order in state.activeTab === 'regular' ? state.acceptedOrders : reviewedOrders"
+                  :key="order._id" :value="order">
+                  {{ formatOrderId(order._id) }} – {{ getCustomerName(order) }} – ₹{{ order.bill?.totalAmount || 0 }}
                 </option>
+
               </select>
             </div>
 
@@ -599,7 +613,8 @@ onMounted(() => {
 
               <!-- Status Options -->
               <div class="space-y-3">
-                <button v-for="status in orderStatuses" :key="status.value" @click="updateOrderStatus(status.value)"
+                <button v-for="status in filteredStatusOptions" :key="status.value"
+                  @click="updateOrderStatus(status.value)"
                   :disabled="state.updatingStatus || (state.selectedOrderForUpdate.status || 'Pending') === status.value"
                   :class="[
                     'w-full p-4 rounded-xl border-2 transition-all duration-200 flex items-center justify-between',
@@ -621,6 +636,7 @@ onMounted(() => {
                   </svg>
                 </button>
               </div>
+
             </div>
           </div>
         </div>
