@@ -1,4 +1,3 @@
-<!-- src/components/AlterationRequestDetailModal.vue -->
 <template>
   <div v-if="visible" class="fixed inset-0 z-50 bg-black bg-opacity-40 flex justify-center items-center">
     <div class="bg-white p-6 rounded-xl shadow-xl w-full max-w-xl relative">
@@ -50,7 +49,6 @@ import { useToast } from 'vue-toastification';
 const props = defineProps({
   request: Object,
   visible: Boolean,
-  boutiqueId: String,
 });
 const emit = defineEmits(['close', 'updated']);
 
@@ -67,9 +65,9 @@ watch(
 
 const reviewRequest = async () => {
   try {
-    const updated = await reviewAlterationRequest(props.boutiqueId, props.request._id);
+    const updated = await reviewAlterationRequest(props.request._id); // ✅ No boutiqueId needed
     toast.success('✅ Marked as reviewed');
-    emit('updated', updated.status);
+    emit('updated', updated.alterationRequest.status); // or emit full object if needed
     emit('close');
   } catch (err) {
     toast.error("❌ Failed to mark as reviewed");

@@ -125,6 +125,7 @@
   </section>
 </template>
 
+// ✅ Updated DressView.vue with consistent param usage
 <script setup>
 import { ref, onMounted } from 'vue';
 import { useToast } from 'vue-toastification';

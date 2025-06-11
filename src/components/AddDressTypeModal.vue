@@ -21,7 +21,9 @@
           </div>
 
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Measurement Requirements (comma separated)</label>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+              Measurement Requirements (comma separated)
+            </label>
             <input
               v-model="form.measurements"
               type="text"
@@ -64,13 +66,16 @@
 
 <script setup>
 import { ref } from 'vue';
-import axios from 'axios';
+import { useToast } from 'vue-toastification';
+import { addDressType } from '@/services/api'; // ✅ use central API method
 
 const props = defineProps({
   isOpen: Boolean,
   boutiqueId: String,
 });
-const emit = defineEmits(['close', 'success']);
+const emit = defineEmits(['close', 'success', 'refresh']);
+
+const toast = useToast();
 
 const form = ref({
   dressType: '',
@@ -85,23 +90,22 @@ const handleFiles = (e) => {
 
 const submit = async () => {
   try {
-    const data = new FormData();
-    data.append('boutiqueId', props.boutiqueId);
-    data.append('dressType', form.value.dressType);
+    const formData = new FormData();
+    formData.append('dressType', form.value.dressType);
     const cleanedMeasurements = form.value.measurements.trim()
-      ? JSON.stringify(form.value.measurements.split(',').map(m => m.trim()))
+      ? JSON.stringify(form.value.measurements.split(',').map((m) => m.trim()))
       : '[]';
-    data.append('measurementRequirements', cleanedMeasurements);
-    files.value.forEach(file => data.append('images', file));
+    formData.append('measurementRequirements', cleanedMeasurements);
+    files.value.forEach((file) => formData.append('images', file));
 
-    await axios.post(`https://needles-v1.onrender.com/Boutique/${props.boutiqueId}/add-dress-type`, data, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
+    await addDressType(formData); // ✅ call centralized API method
 
+    toast.success('✅ Dress type added successfully');
     emit('success');
+    emit('refresh'); // optional if needed
     close();
   } catch (err) {
-    alert('Failed to add dress type.');
+    toast.error('❌ Failed to add dress type.');
     console.error(err);
   }
 };
@@ -118,7 +122,13 @@ const close = () => {
   animation: fadeIn 0.25s ease-out;
 }
 @keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.95); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 </style>

@@ -38,7 +38,7 @@
 import { ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useToast } from 'vue-toastification';
-import { verifyOtp } from '@/services/api';
+import { verifyOtp, isAuthenticated } from '@/services/api';
 
 const route = useRoute();
 const router = useRouter();
@@ -62,6 +62,13 @@ const handleOtpSubmit = async () => {
   loading.value = true;
 
   try {
+    console.log('🔑 Submitting OTP verification with:', {
+      name,
+      phone, 
+      otp: otp.value,
+      boutiqueUserId
+    });
+
     const response = await verifyOtp({
       name,
       phone,
@@ -69,15 +76,26 @@ const handleOtpSubmit = async () => {
       boutiqueUserId
     });
 
+    console.log('✅ OTP verification response:', response.data);
+
     if (response.status === 200) {
-      toast.success('OTP verified. Welcome!');
-      router.push({ name: 'home' });
+      // Check if we now have authentication
+      const authStatus = isAuthenticated();
+      console.log('🔐 Authentication status after OTP:', authStatus);
+      
+      toast.success('OTP verified successfully! Welcome!');
+      
+      // Small delay to ensure token is properly set
+      setTimeout(() => {
+        router.push({ name: 'home' });
+      }, 100);
     } else {
       errorMessage.value = response.data?.message || 'Invalid OTP.';
       toast.error(errorMessage.value);
     }
   } catch (error) {
-    errorMessage.value = error.data?.message || 'Verification failed.';
+    console.error('❌ OTP verification error:', error);
+    errorMessage.value = error.data?.message || 'Verification failed. Please try again.';
     toast.error(errorMessage.value);
   } finally {
     loading.value = false;

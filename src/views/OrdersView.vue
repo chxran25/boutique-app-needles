@@ -1,11 +1,12 @@
 <script setup>
 import { reactive, onMounted, computed } from "vue";
 import { useToast } from "vue-toastification";
-import { getPaidOrders, updateOrderStatus as updateOrderStatusAPI } from "@/services/api";
+import { getPaidOrders, updateOrderStatus as updateOrderStatusAPI, getReviewedAlterationRequests } from "@/services/api";
 import PaidOrderModal from "@/components/PaidOrderModal.vue";
 
 const state = reactive({
   acceptedOrders: [],
+  reviewedAlterations: [],
   loading: true,
   showModal: false,
   selectedOrder: null,
@@ -14,6 +15,7 @@ const state = reactive({
   selectedOrderForUpdate: null,
   updatingStatus: false,
   statusFilter: 'all', // all, accepted, in-progress, ready-for-delivery, reviewed
+  reviewedStatusFilter: 'all',
   activeTab: 'regular', // regular, reviewed
 });
 
@@ -82,13 +84,11 @@ const regularOrders = computed(() => {
   });
 });
 
-// Computed property for reviewed orders
+// ✅ Updated: Computed property for reviewed orders
 const reviewedOrders = computed(() => {
-  return state.acceptedOrders.filter(order => {
-    const normalizedStatus = normalizeStatusForFilter(order.status);
-    return normalizedStatus === 'reviewed';
-  });
+  return state.reviewedAlterations;
 });
+
 
 // Computed property for current tab orders
 const currentTabOrders = computed(() => {
@@ -99,15 +99,13 @@ const currentTabOrders = computed(() => {
 const filteredOrders = computed(() => {
   let orders = currentTabOrders.value;
 
-  // Filter by status (only for regular tab)
-  if (state.activeTab === 'regular' && state.statusFilter !== 'all') {
-    orders = orders.filter(order => {
-      const normalizedStatus = normalizeStatusForFilter(order.status);
-      return normalizedStatus === state.statusFilter;
-    });
+  const filterKey = state.activeTab === 'regular' ? state.statusFilter : state.reviewedStatusFilter;
+
+  if (filterKey !== 'all') {
+    orders = orders.filter(order => normalizeStatusForFilter(order.status) === filterKey);
   }
 
-  // Filter by search query
+  // Search filter
   if (state.searchQuery) {
     orders = orders.filter(order =>
       order._id.toLowerCase().includes(state.searchQuery.toLowerCase()) ||
@@ -172,6 +170,27 @@ const fetchAcceptedOrders = async () => {
   }
 };
 
+const fetchReviewedAlterations = async () => {
+  try {
+    const alterations = await getReviewedAlterationRequests();
+    state.reviewedAlterations = alterations.map((alt) => ({
+      ...alt,
+      voiceNotes: alt.voiceNote || [],
+      bill: {
+        totalAmount: alt.price || 0,
+        itemBreakdown: { Alteration: 1 }
+      },
+      userId: alt.userId,
+      status: alt.status,
+      createdAt: alt.createdAt || alt.updatedAt || new Date(),
+    }));
+  } catch (error) {
+    toast.error("❌ Failed to fetch reviewed alterations.");
+    console.error("Error fetching reviewed alterations:", error);
+  }
+};
+
+
 const openModal = (order) => {
   state.selectedOrder = order;
   state.showModal = true;
@@ -199,7 +218,8 @@ const updateOrderStatus = async (newStatus) => {
     state.updatingStatus = true;
 
     // Call the actual API
-    await updateOrderStatusAPI(boutiqueId, state.selectedOrderForUpdate._id, newStatus);
+    await updateOrderStatusAPI(state.selectedOrderForUpdate._id, newStatus);
+
 
     // Update the order locally after successful API call
     const orderIndex = state.acceptedOrders.findIndex(order =>
@@ -256,7 +276,10 @@ const switchTab = (tab) => {
   state.searchQuery = '';
 };
 
-onMounted(fetchAcceptedOrders);
+onMounted(() => {
+  fetchAcceptedOrders();
+  fetchReviewedAlterations();
+});
 </script>
 
 <template>
@@ -320,6 +343,7 @@ onMounted(fetchAcceptedOrders);
 
         <!-- Status Filter Tabs (only for regular orders) -->
         <div v-if="state.activeTab === 'regular'" class="mt-6 flex flex-wrap gap-2">
+          
           <button @click="state.statusFilter = 'all'" :class="[
             'px-4 py-2 rounded-xl font-medium transition-all duration-200',
             state.statusFilter === 'all'
@@ -340,6 +364,8 @@ onMounted(fetchAcceptedOrders);
             {{ status.label }} ({{ statusCounts[status.filterValue] }})
           </button>
         </div>
+
+        
 
         <!-- Search Bar -->
         <div class="mt-6">
