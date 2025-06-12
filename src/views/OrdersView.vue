@@ -1,7 +1,7 @@
 <script setup>
 import { reactive, onMounted, computed } from "vue";
 import { useToast } from "vue-toastification";
-import { getPaidOrders, updateOrderStatus as updateOrderStatusAPI, getReviewedAlterationRequests , updateAlterationStatus} from "@/services/api";
+import { getPaidOrders, updateOrderStatus as updateOrderStatusAPI, getReviewedAlterationRequests, updateAlterationStatus, getCompletedOrders } from "@/services/api";
 import PaidOrderModal from "@/components/PaidOrderModal.vue";
 
 const state = reactive({
@@ -55,8 +55,17 @@ const orderStatuses = [
     bgColor: 'bg-purple-100',
     textColor: 'text-purple-800',
     filterValue: 'reviewed'
+  },
+  {
+    value: 'Completed',
+    label: 'Completed',
+    color: 'gray',
+    bgColor: 'bg-gray-200',
+    textColor: 'text-gray-800',
+    filterValue: 'completed'
   }
 ];
+
 
 // Helper function to normalize status for filtering
 const normalizeStatusForFilter = (status) => {
@@ -67,6 +76,7 @@ const normalizeStatusForFilter = (status) => {
     'In Progress': 'in-progress',
     'Ready for Delivery': 'ready-for-delivery',
     'Reviewed': 'reviewed',
+    'Completed': 'completed',    
     // Handle legacy statuses if they exist
     'accepted': 'pending',
     'in-progress': 'in-progress',
@@ -152,17 +162,19 @@ const statusCounts = computed(() => {
 const fetchAcceptedOrders = async () => {
   try {
     state.loading = true;
-    const orders = await getPaidOrders(boutiqueId);
-    state.acceptedOrders = orders.map((order, idx) => {
+
+    const [paid, completed] = await Promise.all([
+      getPaidOrders(boutiqueId),
+      getCompletedOrders(),
+    ]);
+
+    const combinedOrders = [...paid, ...completed];
+
+    state.acceptedOrders = combinedOrders.map((order) => {
       let parsedLocation = "Unknown";
       try {
         const loc = order.boutiqueId?.location;
-        if (typeof loc === 'string') {
-          const parsed = JSON.parse(loc);
-          parsedLocation = parsed?.formattedAddress || "Unknown";
-        } else if (typeof loc === 'object' && loc !== null) {
-          parsedLocation = loc.formattedAddress || "Unknown";
-        }
+        parsedLocation = typeof loc === 'string' ? JSON.parse(loc).formattedAddress : loc?.formattedAddress || "Unknown";
       } catch (e) {
         console.warn("⚠️ Failed to parse location:", e);
       }
@@ -174,13 +186,15 @@ const fetchAcceptedOrders = async () => {
         status: order.status || 'Pending'
       };
     });
+
   } catch (error) {
-    toast.error("❌ Failed to fetch paid orders.");
+    toast.error("❌ Failed to fetch orders.");
     console.error("Error fetching orders:", error);
   } finally {
     state.loading = false;
   }
 };
+
 
 const fetchReviewedAlterations = async () => {
   try {
@@ -375,7 +389,7 @@ onMounted(() => {
             All Orders ({{ statusCounts.all }})
           </button>
 
-          <button v-for="status in orderStatuses.filter(s => s.filterValue !== 'reviewed')" :key="status.value"
+          <button v-for="status in orderStatuses.filter(s => !['reviewed'].includes(s.filterValue))" :key="status.value"
             @click="state.statusFilter = status.filterValue" :class="[
               'px-4 py-2 rounded-xl font-medium transition-all duration-200 flex items-center gap-2',
               state.statusFilter === status.filterValue

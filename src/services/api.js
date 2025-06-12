@@ -230,6 +230,16 @@ export const getPaidOrders = async () => {
   }
 };
 
+export const getCompletedOrders = async () => {
+  try {
+    const response = await api.get('/Boutique/order-completed');
+    return response.data.orders || [];
+  } catch (error) {
+    console.error('❌ Failed to fetch completed orders:', error.response?.data || error.message);
+    return [];
+  }
+};
+
 // ✅ Update Order Status
 export const updateOrderStatus = async (orderId, status) => {
   console.log(`🔄 Updating order ${orderId} to status: ${status}...`);
