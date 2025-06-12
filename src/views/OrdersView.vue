@@ -1,7 +1,7 @@
 <script setup>
 import { reactive, onMounted, computed } from "vue";
 import { useToast } from "vue-toastification";
-import { getPaidOrders, updateOrderStatus as updateOrderStatusAPI, getReviewedAlterationRequests } from "@/services/api";
+import { getPaidOrders, updateOrderStatus as updateOrderStatusAPI, getReviewedAlterationRequests , updateAlterationStatus} from "@/services/api";
 import PaidOrderModal from "@/components/PaidOrderModal.vue";
 
 const state = reactive({
@@ -229,17 +229,27 @@ const updateOrderStatus = async (newStatus) => {
   try {
     state.updatingStatus = true;
 
-    // Call the actual API
-    await updateOrderStatusAPI(state.selectedOrderForUpdate._id, newStatus);
+    if (state.activeTab === 'reviewed') {
+      // ✅ Update reviewed alteration order
+      await updateAlterationStatus(state.selectedOrderForUpdate._id, newStatus);
 
+      // Update locally
+      const index = state.reviewedAlterations.findIndex(
+        alt => alt._id === state.selectedOrderForUpdate._id
+      );
+      if (index !== -1) {
+        state.reviewedAlterations[index].status = newStatus;
+      }
+    } else {
+      // ✅ Update regular order
+      await updateOrderStatusAPI(state.selectedOrderForUpdate._id, newStatus);
 
-    // Update the order locally after successful API call
-    const orderIndex = state.acceptedOrders.findIndex(order =>
-      order._id === state.selectedOrderForUpdate._id
-    );
-
-    if (orderIndex !== -1) {
-      state.acceptedOrders[orderIndex].status = newStatus;
+      const orderIndex = state.acceptedOrders.findIndex(order =>
+        order._id === state.selectedOrderForUpdate._id
+      );
+      if (orderIndex !== -1) {
+        state.acceptedOrders[orderIndex].status = newStatus;
+      }
     }
 
     const statusLabel = orderStatuses.find(s => s.value === newStatus)?.label;

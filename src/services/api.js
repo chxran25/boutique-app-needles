@@ -353,6 +353,20 @@ export const getReviewedAlterationRequests = async () => {
   }
 };
 
+// ✅ Update reviewed alteration status
+export const updateAlterationStatus = async (requestId, status) => {
+  try {
+    const response = await api.patch(`/Boutique/alteration/respond/${requestId}`, {
+      responseStatus: status,
+    });
+    return response.data;
+  } catch (error) {
+    console.error('❌ Failed to update alteration status:', error.response?.data || error.message);
+    throw error.response || error;
+  }
+};
+
+
 // =============== PROFILE MANAGEMENT FUNCTIONS ===============
 
 // ✅ Get boutique profile data
