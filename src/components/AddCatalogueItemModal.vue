@@ -52,8 +52,7 @@ import { addCatalogueItems } from '@/services/api';
 import { useToast } from 'vue-toastification';
 
 const props = defineProps({
-  isOpen: Boolean,
-  boutiqueId: String,
+  isOpen: Boolean
 });
 
 const emit = defineEmits(['close', 'refresh']);
@@ -79,7 +78,10 @@ const removeItem = (index) => {
 const submit = async () => {
   try {
     submitting.value = true;
-    await addCatalogueItems(props.boutiqueId, items.value);
+
+    // ✅ Call API with just items (no boutiqueId)
+    await addCatalogueItems(items.value);
+
     toast.success('✅ Catalogue items added successfully!');
     emit('refresh');
     emit('close');
@@ -92,19 +94,3 @@ const submit = async () => {
   }
 };
 </script>
-
-<style scoped>
-.animate-fade-in {
-  animation: fadeIn 0.25s ease-out;
-}
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-</style>

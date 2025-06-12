@@ -112,7 +112,6 @@
     />
     <AddCatalogueItemModal
       :isOpen="showAddCatalogueModal"
-      :boutiqueId="boutiqueId"
       @close="showAddCatalogueModal = false"
       @refresh="fetchCatalogue"
     />
@@ -213,7 +212,7 @@ const confirmDeleteCatalogueItem = (itemName) => {
 
 const handleCatalogueItemDelete = async () => {
   try {
-    await deleteCatalogueItems(boutiqueId, [catalogueItemToDelete.value]);
+    await deleteCatalogueItems([catalogueItemToDelete.value]);
     toast.success('Catalogue item deleted');
     fetchCatalogue();
   } catch {

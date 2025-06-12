@@ -299,7 +299,7 @@ export const getBoutiqueCatalogueWithName = async () => {
   }
 };
 
-// ✅ Add catalogue items
+// ✅ Add catalogue items (authenticated)
 export const addCatalogueItems = async (newItems) => {
   try {
     const response = await api.post('/Boutique/add-catalogue-item', { newItems });
@@ -310,7 +310,8 @@ export const addCatalogueItems = async (newItems) => {
   }
 };
 
-// ✅ Delete catalogue items
+
+// ✅ Delete catalogue items using token-authenticated boutiqueId
 export const deleteCatalogueItems = async (itemNames) => {
   try {
     const response = await api.delete('/Boutique/delete-catalogue-item', {
