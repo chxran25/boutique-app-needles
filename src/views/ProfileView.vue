@@ -2,7 +2,11 @@
   <div class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100 pb-24">
     <div class="max-w-4xl mx-auto p-6 space-y-10">
       <ProfileHeaderImage @update:images="headerImages = $event" />
-      <ProfileCard @change-password="showPasswordModal = true" @change-phone="showPhoneModal = true" />
+      <ProfileCard 
+        :phoneNumber="phoneNumber" 
+        @change-password="showPasswordModal = true" 
+        @change-phone="showPhoneModal = true" 
+      />
     </div>
 
     <!-- 🔐 Change Password Modal -->
@@ -10,14 +14,20 @@
       <div v-if="showPasswordModal"
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4"
         @click.self="showPasswordModal = false">
-        <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden transform transition-all duration-300 scale-100">
+        <div
+          class="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden transform transition-all duration-300 scale-100">
           <!-- Password modal content remains unchanged -->
         </div>
       </div>
     </teleport>
 
     <!-- 📱 Change Phone Modal -->
-    <ChangePhoneModal v-if="showPhoneModal" @close="showPhoneModal = false" />
+    <ChangePhoneModal 
+      v-if="showPhoneModal" 
+      @close="showPhoneModal = false"
+      @phone-updated="handlePhoneUpdate"
+    />
+
   </div>
 </template>
 
@@ -32,6 +42,7 @@ import ChangePhoneModal from '@/components/ChangePhoneModal.vue';
 const passwords = ref({ oldPassword: '', newPassword: '', confirmPassword: '' });
 const showPasswordModal = ref(false);
 const showPhoneModal = ref(false);
+const phoneNumber = ref('');
 const isChangingPassword = ref(false);
 const showOldPassword = ref(false);
 const showNewPassword = ref(false);
@@ -68,5 +79,9 @@ const changePasswordHandler = async () => {
   } finally {
     isChangingPassword.value = false;
   }
+};
+
+const handlePhoneUpdate = (updatedPhone) => {
+  phoneNumber.value = updatedPhone;
 };
 </script>

@@ -67,6 +67,7 @@ import { ref, onMounted } from 'vue';
 import { getBoutiqueProfile, updateBoutiqueProfile, logoutBoutique } from '@/services/api';
 import { useToast } from 'vue-toastification';
 
+defineProps({ phoneNumber: String });
 const emit = defineEmits(['change-password', 'change-phone']);
 const toast = useToast();
 
