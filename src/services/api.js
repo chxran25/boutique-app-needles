@@ -262,7 +262,6 @@ export const addDressType = async (formData) => {
   }
 };
 
-
 // ✅ Delete dress type
 export const deleteDressTypeAPI = async (boutiqueId, dressType) => {
   try {
@@ -354,5 +353,160 @@ export const getReviewedAlterationRequests = async () => {
   }
 };
 
+// =============== PROFILE MANAGEMENT FUNCTIONS ===============
+
+// ✅ Get boutique profile data
+export const getBoutiqueProfile = async () => {
+  try {
+    console.log('👤 Fetching boutique profile...');
+
+    if (!isAuthenticated()) {
+      throw new Error('No authentication token found. Please login again.');
+    }
+
+    const response = await api.get('/Boutique/');
+    console.log('✅ Profile data fetched successfully');
+    return response.data;
+  } catch (error) {
+    console.error('❌ Failed to fetch profile:', error.response?.data || error.message);
+    if (error.response?.status === 401) {
+      throw new Error('Authentication required. Please log in again.');
+    }
+    throw error.response || error;
+  }
+};
+
+// ✅ Update boutique profile details
+export const updateBoutiqueProfile = async (profileData) => {
+  try {
+    console.log('✏️ Updating boutique profile...');
+    const response = await api.patch('/Boutique/edit', profileData);
+    console.log('✅ Profile updated successfully');
+    return response.data;
+  } catch (error) {
+    console.error('❌ Failed to update profile:', error.response?.data || error.message);
+    throw error.response || error;
+  }
+};
+
+// ✅ Change password
+export const changePassword = async (passwordData) => {
+  try {
+    console.log('🔐 Changing password...');
+    const response = await api.patch('/Boutique/change-password', passwordData);
+    console.log('✅ Password changed successfully');
+    return response.data;
+  } catch (error) {
+    console.error('❌ Failed to change password:', error.response?.data || error.message);
+    throw error.response || error;
+  }
+};
+
+// ✅ Request phone number update
+export const requestPhoneUpdate = async (phoneData) => {
+  try {
+    console.log('📱 Requesting phone number update...');
+    const response = await api.post('/Boutique/request-phone-update', phoneData);
+    console.log('✅ Phone update request sent successfully');
+    return response.data;
+  } catch (error) {
+    console.error('❌ Failed to request phone update:', error.response?.data || error.message);
+    throw error.response || error;
+  }
+};
+
+// ✅ Confirm phone number update
+export const confirmPhoneUpdate = async (confirmationData) => {
+  try {
+    console.log('✅ Confirming phone number update...');
+    const response = await api.post('/Boutique/confirm-phone-update', confirmationData);
+    console.log('✅ Phone number updated successfully');
+    return response.data;
+  } catch (error) {
+    console.error('❌ Failed to confirm phone update:', error.response?.data || error.message);
+    throw error.response || error;
+  }
+};
+
+// ✅ Add header images
+export const addHeaderImages = async (imageFiles) => {
+  try {
+    console.log('🖼️ Adding header images...');
+    
+    const formData = new FormData();
+    
+    // Handle multiple image files
+    if (Array.isArray(imageFiles)) {
+      imageFiles.forEach((file) => {
+        formData.append('images', file);
+      });
+    } else {
+      formData.append('images', imageFiles);
+    }
+
+    const response = await api.post('/Boutique/header-image/add', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    
+    console.log('✅ Header images added successfully');
+    return response.data;
+  } catch (error) {
+    console.error('❌ Failed to add header images:', error.response?.data || error.message);
+    throw error.response || error;
+  }
+};
+
+// ✅ Delete individual header image
+export const deleteHeaderImage = async ({ imageUrl }) => {
+  try {
+    console.log('🗑️ Deleting single header image:', imageUrl);
+    const response = await api.delete('/Boutique/header-image/delete', {
+      data: { imageUrl },
+    });
+    console.log('✅ Header image deleted successfully');
+    return response.data;
+  } catch (error) {
+    console.error('❌ Failed to delete single header image:', error.response?.data || error.message);
+    throw error.response || error;
+  }
+};
+
+// ✅ Delete all header images
+export const deleteAllHeaderImages = async (imageData) => {
+  try {
+    console.log('🗑️ Deleting header image...');
+    const response = await api.delete('/Boutique/header-image/delete-all', {
+      data: imageData,
+    });
+    console.log('✅ Header image deleted successfully');
+    return response.data;
+  } catch (error) {
+    console.error('❌ Failed to delete header image:', error.response?.data || error.message);
+    throw error.response || error;
+  }
+};
+
+// ✅ Logout boutique
+export const logoutBoutique = async () => {
+  try {
+    console.log('🚪 Logging out boutique...');
+    const response = await api.post('/Boutique/logout');
+    
+    // Clear local storage and tokens
+    logout();
+    
+    console.log('✅ Boutique logged out successfully');
+    return response.data;
+  } catch (error) {
+    console.error('❌ Failed to logout boutique:', error.response?.data || error.message);
+    
+    // Even if the API call fails, clear local data
+    logout();
+    
+    throw error.response || error;
+  }
+};
 
 export default api;

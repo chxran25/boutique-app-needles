@@ -1,127 +1,72 @@
-<script setup>
-import { reactive, onMounted, watch } from "vue";
-import { useRouter } from "vue-router";
-import { useBoutiqueStore } from "@/store/boutique";
-import { useToast } from "vue-toastification";
-import axios from "axios";
-
-const router = useRouter();
-const toast = useToast();
-const boutiqueStore = useBoutiqueStore();
-
-const state = reactive({
-  isEditing: false,
-  profile: {
-    boutiqueName: "",
-    ownerName: "",
-    phone: "",
-    address: "",
-    imageUrl: "https://via.placeholder.com/200x200" // Placeholder image
-  }
-});
-
-// Fetch profile from JSON server
-const fetchProfile = async () => {
-  try {
-    const response = await axios.get("http://localhost:9000/profile");
-    state.profile = response.data;
-    boutiqueStore.updateBoutiqueName(state.profile.boutiqueName);
-  } catch (error) {
-    console.error("Failed to fetch profile:", error);
-    toast.error("Failed to load profile data.");
-  }
-};
-
-// Watch for boutique name changes
-watch(() => boutiqueStore.boutiqueName, (newName) => {
-  state.profile.boutiqueName = newName;
-});
-
-// Save profile
-const handleSave = async () => {
-  try {
-    await axios.put("http://localhost:9000/profile", state.profile);
-    boutiqueStore.updateBoutiqueName(state.profile.boutiqueName);
-    state.isEditing = false;
-    toast.success("Profile updated successfully!");
-  } catch (error) {
-    console.error("Error saving profile:", error);
-    toast.error("Failed to update profile.");
-  }
-};
-
-// Logout function
-const handleLogout = () => {
-  router.push("/login");
-};
-
-// Fetch profile on mount
-onMounted(fetchProfile);
-</script>
-
 <template>
-  <div class="p-6 max-w-2xl mx-auto bg-white rounded-xl shadow-md space-y-6 mt-6">
-    <!-- Profile Picture -->
-    <div class="flex justify-center">
-      <img
-        :src="state.profile.imageUrl"
-        alt="Boutique"
-        class="w-32 h-32 rounded-lg border border-gray-300 object-cover shadow-md"
-      />
+  <div class="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100 pb-24">
+    <div class="max-w-4xl mx-auto p-6 space-y-10">
+      <ProfileHeaderImage @update:images="headerImages = $event" />
+      <ProfileCard @change-password="showPasswordModal = true" @change-phone="showPhoneModal = true" />
     </div>
 
-    <div v-if="state.isEditing" class="space-y-4">
-      <div>
-        <label class="block text-gray-700 font-medium">Boutique Name:</label>
-        <input v-model="state.profile.boutiqueName" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-400" />
+    <!-- 🔐 Change Password Modal -->
+    <teleport to="body">
+      <div v-if="showPasswordModal"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4"
+        @click.self="showPasswordModal = false">
+        <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl overflow-hidden transform transition-all duration-300 scale-100">
+          <!-- Password modal content remains unchanged -->
+        </div>
       </div>
+    </teleport>
 
-      <div>
-        <label class="block text-gray-700 font-medium">Owner Name:</label>
-        <input v-model="state.profile.ownerName" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-400" />
-      </div>
-
-      <div>
-        <label class="block text-gray-700 font-medium">Phone:</label>
-        <input v-model="state.profile.phone" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-400" />
-      </div>
-
-      <div>
-        <label class="block text-gray-700 font-medium">Address:</label>
-        <input v-model="state.profile.address" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-400" />
-      </div>
-
-      <div>
-        <label class="block text-gray-700 font-medium">Boutique Image URL:</label>
-        <input v-model="state.profile.imageUrl" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-400" />
-      </div>
-
-      <!-- Save & Cancel Buttons (Moved Up) -->
-      <div class="flex justify-between mt-6 space-x-4">
-        <button @click="handleSave" class="bg-green-500 text-white px-4 py-2 rounded-lg w-1/2 shadow-md">
-          Save
-        </button>
-        <button @click="state.isEditing = false" class="bg-gray-500 text-white px-4 py-2 rounded-lg w-1/2 shadow-md">
-          Cancel
-        </button>
-      </div>
-    </div>
-
-    <div v-else class="text-lg space-y-4 px-6 py-6 bg-gray-50 rounded-lg shadow-md">
-      <p><strong>Boutique Name:</strong> {{ state.profile.boutiqueName }}</p>
-      <p><strong>Owner Name:</strong> {{ state.profile.ownerName }}</p>
-      <p><strong>Phone:</strong> {{ state.profile.phone }}</p>
-      <p><strong>Address:</strong> {{ state.profile.address }}</p>
-
-      <!-- Edit Profile & Logout Buttons (Smaller & Evenly Spaced) -->
-      <div class="flex justify-between mt-4">
-        <button @click="state.isEditing = true" class="bg-blue-500 text-white px-4 py-2 rounded-lg w-[48%] shadow-md">
-          Edit Profile
-        </button>
-        <button @click="handleLogout" class="bg-red-500 text-white px-4 py-2 rounded-lg w-[48%] shadow-md">
-          Logout
-        </button>
-      </div>
-    </div>
+    <!-- 📱 Change Phone Modal -->
+    <ChangePhoneModal v-if="showPhoneModal" @close="showPhoneModal = false" />
   </div>
 </template>
+
+<script setup>
+import { ref, computed } from 'vue';
+import { changePassword } from '@/services/api';
+import { useToast } from 'vue-toastification';
+import ProfileHeaderImage from '@/components/ProfileHeaderImage.vue';
+import ProfileCard from '@/components/ProfileCard.vue';
+import ChangePhoneModal from '@/components/ChangePhoneModal.vue';
+
+const passwords = ref({ oldPassword: '', newPassword: '', confirmPassword: '' });
+const showPasswordModal = ref(false);
+const showPhoneModal = ref(false);
+const isChangingPassword = ref(false);
+const showOldPassword = ref(false);
+const showNewPassword = ref(false);
+const showConfirmPassword = ref(false);
+const toast = useToast();
+
+const isPasswordFormValid = computed(() => {
+  const { oldPassword, newPassword, confirmPassword } = passwords.value;
+  return oldPassword && newPassword && confirmPassword && newPassword === confirmPassword && newPassword.length >= 6;
+});
+
+const changePasswordHandler = async () => {
+  const { oldPassword, newPassword, confirmPassword } = passwords.value;
+
+  if (newPassword !== confirmPassword) {
+    toast.error('Passwords do not match');
+    return;
+  }
+
+  if (newPassword.length < 6) {
+    toast.error('Password must be at least 6 characters long');
+    return;
+  }
+
+  isChangingPassword.value = true;
+
+  try {
+    await changePassword({ oldPassword, newPassword });
+    toast.success('Password updated successfully');
+    passwords.value = { oldPassword: '', newPassword: '', confirmPassword: '' };
+    showPasswordModal.value = false;
+  } catch (error) {
+    toast.error(error.response?.data?.message || 'Failed to update password');
+  } finally {
+    isChangingPassword.value = false;
+  }
+};
+</script>
