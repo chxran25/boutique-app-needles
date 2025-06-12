@@ -3,7 +3,7 @@
     <div class="w-full max-w-md p-8 bg-white rounded-xl shadow-lg">
       <h2 class="text-2xl font-semibold text-center text-gray-700 mb-6">Enter OTP</h2>
 
-      <form @submit.prevent="handleOtpSubmit">
+      <form autocomplete="off" @submit.prevent="handleOtpSubmit">
         <div class="mb-4">
           <label class="block text-gray-600 mb-2">OTP sent to {{ phone }}</label>
           <input
