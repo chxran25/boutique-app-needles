@@ -1,12 +1,15 @@
-import { defineStore } from "pinia";
+import { defineStore } from 'pinia';
+import { ref } from 'vue';
 
-export const useBoutiqueStore = defineStore("boutique", {
-  state: () => ({
-    boutiqueName: "Chic Couture", // Default name
-  }),
-  actions: {
-    updateBoutiqueName(newName) {
-      this.boutiqueName = newName;
-    },
-  },
+export const useBoutiqueStore = defineStore('boutique', () => {
+  const boutiqueName = ref('');
+
+  const updateBoutiqueName = (name) => {
+    boutiqueName.value = name;
+  };
+
+  return {
+    boutiqueName,
+    updateBoutiqueName,
+  };
 });
