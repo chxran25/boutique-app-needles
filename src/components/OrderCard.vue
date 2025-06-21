@@ -4,11 +4,17 @@
     'backdrop-blur-sm transition-all duration-300 ease-out',
     showDetails ? '' : 'hover:shadow-xl hover:shadow-gray-200/50 hover:-translate-y-1 hover:border-gray-200/70'
   ]">
-    <!-- Referral Image -->
+    <!-- Header Image -->
     <div v-if="localOrder.image" class="relative overflow-hidden">
-      <img :src="localOrder.image" alt="Dress Image" class="w-full h-48 object-cover transition-transform duration-500 hover:scale-105" />
-      <div class="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
-    </div>
+  <img
+    :src="localOrder.image"
+    alt="Dress Image"
+    class="w-full h-48 object-cover transition-transform duration-500 hover:scale-105 cursor-pointer"
+    @click="openImageModal(localOrder.image)"
+  />
+  <div class="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent pointer-events-none"></div>
+</div>
+
 
     <div class="p-6 space-y-4">
       <!-- Order Header -->
@@ -54,7 +60,7 @@
         </div>
       </div>
 
-      <!-- Location -->
+      <!-- Delivery Location -->
       <div class="flex items-start gap-3 p-3 bg-blue-50/50 rounded-xl border border-blue-100">
         <div class="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center text-white shadow-sm mt-0.5">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -70,22 +76,19 @@
         </div>
       </div>
 
-      <!-- Pickup Info -->
-      <div class="flex items-center gap-3 p-3 rounded-xl border"
-        :class="localOrder.pickUp ? 'bg-green-50/50 border-green-100' : 'bg-gray-50/50 border-gray-100'">
-        <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white shadow-sm"
-          :class="localOrder.pickUp ? 'bg-green-500' : 'bg-gray-400'">
+      <!-- Pickup Status -->
+      <div class="flex items-start gap-3 p-3 rounded-xl border"
+        :class="localOrder.pickUp ? 'bg-green-50/50 border-green-100' : 'bg-yellow-50/50 border-yellow-200'">
+        <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white shadow-sm mt-0.5"
+          :class="localOrder.pickUp ? 'bg-green-500' : 'bg-yellow-500'">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M5 8h14M5 8a2 2 0 100 4h14a2 2 0 100-4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
           </svg>
         </div>
         <div>
-          <p class="font-medium text-sm" :class="localOrder.pickUp ? 'text-green-900' : 'text-gray-900'">
-            {{ localOrder.pickUp ? 'Pickup Available' : 'Delivery Only' }}
-          </p>
-          <p class="text-xs" :class="localOrder.pickUp ? 'text-green-600' : 'text-gray-500'">
-            {{ localOrder.pickUp ? 'Customer will collect' : 'Home delivery required' }}
+          <p class="font-medium text-sm" :class="localOrder.pickUp ? 'text-green-900' : 'text-yellow-900'">
+            {{ localOrder.pickUp ? 'Pickup Required' : 'Pickup Not Required' }}
           </p>
         </div>
       </div>
@@ -155,6 +158,15 @@
         :order="localOrder"
         @close="showDetails = false"
       />
+
+      <!-- Enlarged Image Modal -->
+      <teleport to="body">
+        <ImagePreviewModal
+          v-if="showImageModal"
+          :image-url="selectedImageUrl"
+          @close="showImageModal = false"
+        />
+      </teleport>
     </div>
   </div>
 </template>
@@ -164,6 +176,7 @@ import { ref } from 'vue';
 import AcceptOrderModal from '@/components/AcceptOrderModal.vue';
 import OrderDetailsModal from '@/components/OrderDetailsModal.vue';
 import ReceiptModal from '@/components/ReceiptModal.vue';
+import ImagePreviewModal from '@/components/common/ImagePreviewModal.vue';
 
 const props = defineProps({
   order: Object,
@@ -174,6 +187,8 @@ const showDetails = ref(false);
 const showBilling = ref(false);
 const showReceipt = ref(false);
 const billData = ref({});
+const showImageModal = ref(false);
+const selectedImageUrl = ref('');
 
 const handleBillSuccess = (result) => {
   localOrder.value.status = result.status || 'Accepted';
@@ -184,5 +199,12 @@ const handleBillSuccess = (result) => {
 const handleShowReceipt = (data) => {
   billData.value = data;
   showReceipt.value = true;
+};
+
+const openImageModal = (url) => {
+  console.log('🖼️ Opening image modal:', url);
+  selectedImageUrl.value = url;
+  showImageModal.value = true;
+  console.log('📌 showImageModal:', showImageModal.value);
 };
 </script>
