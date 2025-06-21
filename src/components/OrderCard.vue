@@ -77,7 +77,7 @@
       </div>
 
       <!-- Pickup Status -->
-      <div class="flex items-start gap-3 p-3 rounded-xl border"
+      <div class="flex items-center gap-3 p-3 rounded-xl border"
         :class="localOrder.pickUp ? 'bg-green-50/50 border-green-100' : 'bg-yellow-50/50 border-yellow-200'">
         <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white shadow-sm mt-0.5"
           :class="localOrder.pickUp ? 'bg-green-500' : 'bg-yellow-500'">
