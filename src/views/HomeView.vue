@@ -153,7 +153,7 @@ onMounted(() => {
 
 <template>
   <section class="bg-blue-50 px-4 py-10">
-    <div class="container-xl lg-container m-auto">
+    <div class="container-xl lg-container m-auto pb-12">
       <!-- Loading State -->
       <div v-if="state.loading" class="text-center py-20">
         <div class="animate-spin h-12 w-12 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
