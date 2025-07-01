@@ -29,7 +29,7 @@
             <img
               v-for="(img, index) in dressType.images"
               :key="index"
-              :src="img"
+              :src="img.url"
               class="inline-block w-40 h-40 rounded-xl object-cover border border-gray-200 shadow-sm"
               alt="Dress Image"
             />
