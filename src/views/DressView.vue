@@ -57,7 +57,7 @@
           <div class="relative">
             <img
               v-if="dress.images && dress.images.length"
-              :src="dress.images[0]"
+              :src="dress.images[0].url"
               class="w-full h-48 object-cover rounded-xl mb-4"
             />
             <h2 class="text-xl font-bold text-purple-700 mb-2">{{ dress.type }}</h2>
@@ -98,7 +98,6 @@
     <!-- Modals -->
     <AddDressTypeModal
       :isOpen="showAddModal"
-      :boutiqueId="boutiqueId"
       @close="showAddModal = false"
       @refresh="fetchDressTypes"
     />
@@ -194,7 +193,7 @@ const confirmDeleteDress = (dress) => {
 
 const deleteDressTypeConfirmed = async () => {
   try {
-    await deleteDressTypeAPI(boutiqueId, deleteTarget.value.type);
+    await deleteDressTypeAPI(deleteTarget.value.type);
     toast.success('Dress type deleted');
     fetchDressTypes();
   } catch {

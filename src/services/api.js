@@ -273,10 +273,10 @@ export const addDressType = async (formData) => {
 };
 
 // ✅ Delete dress type
-export const deleteDressTypeAPI = async (boutiqueId, dressType) => {
+export const deleteDressTypeAPI = async (dressType) => {
   try {
     const response = await api.delete('/Boutique/delete-dressType', {
-      data: { boutiqueId, dressType },
+      data: { dressType },
     });
     return response.data;
   } catch (error) {
@@ -284,6 +284,7 @@ export const deleteDressTypeAPI = async (boutiqueId, dressType) => {
     throw error.response || error;
   }
 };
+
 
 // ✅ Fetch catalogue with boutique name
 export const getBoutiqueCatalogueWithName = async () => {

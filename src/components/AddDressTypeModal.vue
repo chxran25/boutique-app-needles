@@ -33,6 +33,19 @@
           </div>
 
           <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Size Chart (one size per line)</label>
+            <textarea
+              v-model="form.sizeChart"
+              rows="4"
+              class="w-full border border-purple-300 rounded-xl p-3 text-sm focus:ring-2 focus:ring-purple-400 outline-none"
+              placeholder="e.g. S: waist 28, chest 34"
+            />
+            <p class="text-xs text-gray-500 mt-1">
+              Format: <code>Size: param value, param value</code> per line.
+            </p>
+          </div>
+
+          <div>
             <label class="block text-sm font-semibold text-gray-700 mb-2">Upload Images</label>
             <input
               type="file"
@@ -40,6 +53,7 @@
               multiple
               @change="handleFiles"
               class="w-full border border-dashed border-gray-300 p-3 rounded-lg bg-gray-50 text-sm cursor-pointer"
+              required
             />
           </div>
 
@@ -67,19 +81,20 @@
 <script setup>
 import { ref } from 'vue';
 import { useToast } from 'vue-toastification';
-import { addDressType } from '@/services/api'; // ✅ use central API method
+import { addDressType } from '@/services/api';
+
+const emit = defineEmits(['close', 'success', 'refresh']);
 
 const props = defineProps({
   isOpen: Boolean,
-  boutiqueId: String,
 });
-const emit = defineEmits(['close', 'success', 'refresh']);
 
 const toast = useToast();
 
 const form = ref({
   dressType: '',
   measurements: '',
+  sizeChart: '',
 });
 
 const files = ref([]);
@@ -88,21 +103,58 @@ const handleFiles = (e) => {
   files.value = Array.from(e.target.files);
 };
 
+const parseSizeChart = (rawText) => {
+  const lines = rawText.split("\n").map(line => line.trim()).filter(line => line !== "");
+  const result = {};
+  lines.forEach(line => {
+    const [sizeLabel, measurements] = line.split(":");
+    if (!sizeLabel || !measurements) return;
+
+    const measurementsParts = measurements.split(",").map(p => p.trim());
+    const obj = {};
+    measurementsParts.forEach(part => {
+      const [key, value] = part.split(/\s+/);
+      if (key && value && !isNaN(parseFloat(value))) {
+        obj[key] = parseFloat(value);
+      }
+    });
+
+    result[sizeLabel.trim()] = obj;
+  });
+  return result;
+};
+
 const submit = async () => {
   try {
+    if (files.value.length === 0) {
+      toast.error("Please upload at least one image.");
+      return;
+    }
+
     const formData = new FormData();
     formData.append('dressType', form.value.dressType);
+
+    // Clean measurements
     const cleanedMeasurements = form.value.measurements.trim()
-      ? JSON.stringify(form.value.measurements.split(',').map((m) => m.trim()))
+      ? JSON.stringify(form.value.measurements.split(',').map(m => m.trim()))
       : '[]';
     formData.append('measurementRequirements', cleanedMeasurements);
+
+    // Parse size chart
+    let parsedSizeChart = '{}';
+    if (form.value.sizeChart.trim()) {
+      const parsed = parseSizeChart(form.value.sizeChart);
+      parsedSizeChart = JSON.stringify(parsed);
+    }
+    formData.append('sizeChart', parsedSizeChart);
+
     files.value.forEach((file) => formData.append('images', file));
 
-    await addDressType(formData); // ✅ call centralized API method
+    await addDressType(formData);
 
     toast.success('✅ Dress type added successfully');
     emit('success');
-    emit('refresh'); // optional if needed
+    emit('refresh');
     close();
   } catch (err) {
     toast.error('❌ Failed to add dress type.');
@@ -112,7 +164,11 @@ const submit = async () => {
 
 const close = () => {
   emit('close');
-  form.value = { dressType: '', measurements: '' };
+  form.value = {
+    dressType: '',
+    measurements: '',
+    sizeChart: '',
+  };
   files.value = [];
 };
 </script>
