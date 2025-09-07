@@ -9,6 +9,9 @@ const api = axios.create({
   withCredentials: true,
 });
 
+console.log('API BASE URL AT RUNTIME =>', api.defaults.baseURL);
+
+
 // Token management
 let authToken = null;
 
